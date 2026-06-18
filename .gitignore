@@ -1,0 +1,13 @@
+# Node
+node_modules/
+server/.env
+client/.env
+
+# Python
+ml/venv/
+ml/__pycache__/
+ml/*.pyc
+ml/training_data.csv
+
+# OS
+.DS_Store
