@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const axios = require('axios');
 const Item = require('../models/Item');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -15,7 +16,38 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/items/my — get all items listed by the logged-in user
+// MUST come before /:id or Express will think "my" is an :id
+router.get('/my', protect, async (req, res) => {
+  try {
+    const items = await Item.find({ seller: req.user._id })
+      .sort({ createdAt: -1 });
+    res.json(items);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// GET /api/items/predict-price — AI price suggestion
+// MUST come before /:id or Express will think "predict-price" is an :id
+router.get('/predict-price', async (req, res) => {
+  try {
+    const { category, condition, age } = req.query;
+
+    const { data } = await axios.post('http://localhost:8000/predict-price', {
+      category,
+      condition,
+      age: Number(age)
+    });
+
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: 'ML service unavailable' });
+  }
+});
+
 // GET /api/items/:id — get single item
+// MUST come AFTER /my and /predict-price
 router.get('/:id', async (req, res) => {
   try {
     const item = await Item.findById(req.params.id)
@@ -69,36 +101,6 @@ router.delete('/:id', protect, async (req, res) => {
 
     await item.deleteOne();
     res.json({ message: 'Item removed' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-const axios = require('axios');
-
-// GET /api/items/predict-price?category=Electronics&condition=good&age=3
-router.get('/predict-price', async (req, res) => {
-  try {
-    const { category, condition, age } = req.query;
-
-    const { data } = await axios.post('http://localhost:8000/predict-price', {
-      category,
-      condition,
-      age: Number(age)
-    });
-
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ message: 'ML service unavailable' });
-  }
-});
-
-// GET /api/items/my — get all items listed by the logged-in user
-router.get('/my', protect, async (req, res) => {
-  try {
-    const items = await Item.find({ seller: req.user._id })
-      .sort({ createdAt: -1 });
-    res.json(items);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
