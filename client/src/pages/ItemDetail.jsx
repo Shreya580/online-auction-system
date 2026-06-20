@@ -12,6 +12,12 @@ export default function ItemDetail() {
   const [item, setItem] = useState(null);
   const [bids, setBids] = useState([]);
   const [bidAmount, setBidAmount] = useState('');
+  const getMinIncrement = (currentBid) => {
+  if (currentBid < 500) return 50;
+  if (currentBid < 2000) return 100;
+  if (currentBid < 10000) return 250;
+  return 500;
+};
   const [maxBudget, setMaxBudget] = useState('');
   const [loading, setLoading] = useState(true);
   const [bidding, setBidding] = useState(false);
@@ -130,8 +136,20 @@ export default function ItemDetail() {
             {item.isActive ? (
               <>
                 <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>Your bid (min ₹{item.currentBid + 1})</label>
-                  <input type="number" value={bidAmount} onChange={e => setBidAmount(e.target.value)} min={item.currentBid + 1} style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '16px' }} />
+                  <label style={{ display: 'block', fontSize: '13px', marginBottom: '4px' }}>
+                    Your bid (min ₹{item.currentBid + getMinIncrement(item.currentBid)})
+                  </label>
+                  <input
+                   type="number"
+                   value={bidAmount}
+                   onChange={e => setBidAmount(e.target.value)}
+                   min={item.currentBid + getMinIncrement(item.currentBid)}
+                   step={getMinIncrement(item.currentBid)}
+                   style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '16px' }}
+                  />
+                  <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>
+                   Bids increase in steps of ₹{getMinIncrement(item.currentBid)}
+                  </p>
                 </div>
                 <button onClick={handleBid} disabled={bidding} style={{ width: '100%', padding: '12px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '4px', fontSize: '15px', cursor: 'pointer', marginBottom: '1.5rem' }}>
                   {bidding ? 'Placing...' : 'Place Bid'}

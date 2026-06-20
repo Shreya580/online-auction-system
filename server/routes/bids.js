@@ -28,12 +28,22 @@ router.post('/', protect, async (req, res) => {
       return res.status(400).json({ message: 'Auction has expired' });
     }
 
-    // 4. Check bid is higher than current
-    if (amount <= item.currentBid) {
-      return res.status(400).json({ 
-        message: `Bid must be higher than current bid of ${item.currentBid}` 
-      });
-    }
+    // 4. Calculate minimum allowed bid increment based on current price
+const getMinIncrement = (currentBid) => {
+  if (currentBid < 500) return 50;
+  if (currentBid < 2000) return 100;
+  if (currentBid < 10000) return 250;
+  return 500;
+};
+
+const minIncrement = getMinIncrement(item.currentBid);
+const minimumBid = item.currentBid + minIncrement;
+
+if (amount < minimumBid) {
+  return res.status(400).json({ 
+    message: `Minimum bid is ₹${minimumBid} (increments of ₹${minIncrement})` 
+  });
+}
 
     // 5. Check seller isn't bidding on their own item
     if (item.seller.toString() === req.user._id.toString()) {
